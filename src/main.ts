@@ -3,33 +3,27 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
-// ESTA FUNCIÓN ES LA QUE IMPORTA api/index.ts
-export async function setupApp(app) {
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+
+  // Configuraciones globales
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe());
 
+  // Swagger estándar (Render no necesita los CDNs, pero puedes dejarlos por seguridad)
   const config = new DocumentBuilder()
     .setTitle('API Control de Gastos - Wlady')
+    .setDescription('Backend para la gestión de gastos de la Unidad #45')
     .setVersion('1.0')
+    .addTag('gastos')
     .build();
     
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document, {
-    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui.min.css',
-    customJs: [
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-bundle.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/4.15.5/swagger-ui-standalone-preset.js',
-    ],
-  });
-}
+  SwaggerModule.setup('api', app, document);
 
-// SOLO PARA DESARROLLO LOCAL
-async function bootstrap() {
-  if (process.env.NODE_ENV !== 'production') {
-    const app = await NestFactory.create(AppModule);
-    await setupApp(app);
-    await app.listen(3000);
-    console.log('🚀 Local: http://localhost:3000/api');
-  }
+  // IMPORTANTE: Render usa la variable de entorno PORT
+  const port = process.env.PORT || 3000;
+  await app.listen(port);
+  console.log(`🚀 Servidor corriendo en puerto: ${port}`);
 }
 bootstrap();
