@@ -4,11 +4,19 @@ import { Model } from 'mongoose';
 import { Gasto } from './schemas/gasto.schema';
 import { CreateGastoDto } from './dto/create-gasto.dto';
 
+import { BadRequestException } from '@nestjs/common';
+import { isValidObjectId } from 'mongoose';
+
 @Injectable()
 export class GastosService {
   constructor(@InjectModel(Gasto.name) private gastoModel: Model<Gasto>) {}
 
-  async create(createGastoDto: CreateGastoDto): Promise<Gasto> {
+async create(createGastoDto: CreateGastoDto): Promise<Gasto> {
+    // Validamos que el ID del bus tenga el formato correcto de MongoDB
+    if (!isValidObjectId(createGastoDto.bus)) {
+      throw new BadRequestException('El ID del bus proporcionado no es válido.');
+    }
+
     const nuevoGasto = new this.gastoModel(createGastoDto);
     return nuevoGasto.save();
   }
@@ -22,21 +30,27 @@ export class GastosService {
       .exec();
   }
 
-  async findAllActive(): Promise<Gasto[]> {
+async findAllActive(): Promise<Gasto[]> {
   return this.gastoModel.find({ deletedAt: null })
-    .populate({
-      path: 'bus',
-      populate: { path: 'rutaAsignada' } // Populate anidado: Gasto -> Bus -> Ruta
-    })
+    .populate('bus') // Solo hacemos populate del Bus
+    .sort({ createdAt: -1 }) // Opcional: ver los últimos registros primero
     .exec();
 }
 
-  async findOne(id: string): Promise<Gasto> {
-    const gasto = await this.gastoModel.findById(id).populate('bus ruta').exec();
-    if (!gasto || gasto.deletedAt) throw new NotFoundException('Gasto no encontrado');
-    return gasto;
+async findOne(id: string): Promise<Gasto> {
+  // 1. Validar formato antes de buscar
+  if (!isValidObjectId(id)) {
+    throw new BadRequestException(`El ID "${id}" no tiene un formato válido de base de datos.`);
   }
 
+  const gasto = await this.gastoModel.findById(id).populate('bus').exec();
+  
+  if (!gasto) {
+    throw new NotFoundException('Gasto no encontrado.');
+  }
+  
+  return gasto;
+}
   // Soft Delete
   async softDelete(id: string): Promise<any> {
     const gasto = await this.gastoModel.findByIdAndUpdate(
@@ -55,21 +69,13 @@ export class GastosService {
     return { message: 'Gasto eliminado permanentemente' };
   }
   async findByBus(busId: string): Promise<Gasto[]> {
-  // Buscamos gastos que pertenezcan al busId y que no estén borrados (soft delete)
-  const gastos = await this.gastoModel.find({ 
-    bus: busId, 
-    deletedAt: null 
-  })
-  .populate('bus')
-  .populate('ruta')
-  .sort({ fecha: -1 }) // Ordenar por los más recientes primero
-  .exec();
+    // Validar el ID del bus enviado por URL
+    if (!isValidObjectId(busId)) {
+      throw new BadRequestException(`El ID del bus "${busId}" es inválido.`);
+    }
 
-  if (!gastos || gastos.length === 0) {
-    // Opcional: podrías lanzar un NotFoundException si prefieres
-    return []; 
+    return this.gastoModel.find({ bus: busId, deletedAt: null })
+      .populate('bus')
+      .exec();
   }
-
-  return gastos;
-}
 }

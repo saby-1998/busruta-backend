@@ -21,6 +21,11 @@ export class GastosController {
     return this.gastosService.findAllActive();
   }
 
+  @Get(':id') // 2. Ruta con parámetro: DEBE IR AL FINAL
+  findOne(@Param('id') id: string) {
+    return this.gastosService.findOne(id);
+  }
+
   @Get('bus/:busId')
   @ApiOperation({ summary: 'Filtrar gastos por un bus específico' })
   findByBus(@Param('busId') busId: string) {

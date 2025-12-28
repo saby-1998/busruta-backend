@@ -12,13 +12,12 @@ class OtroGasto {
 
 @Schema({ timestamps: true })
 export class Gasto extends Document {
-// RELACIÓN: El gasto pertenece a un Bus específico
-  @Prop({ type: Types.ObjectId, ref: 'Bus', required: true })
+@Prop({ type: Types.ObjectId, ref: 'Bus', required: true })
   bus: Types.ObjectId;
 
-  // Opcional: Guardar la ruta en el momento del gasto por si el bus cambia de ruta luego
-  @Prop({ type: Types.ObjectId, ref: 'Ruta' })
-  ruta: Types.ObjectId;
+  // Cambiamos de Types.ObjectId a String y quitamos el ref
+  @Prop({ type: String, default: null })
+  ruta: string;
 
   @Prop({ required: true })
   chofer: string;
