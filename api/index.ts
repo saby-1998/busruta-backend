@@ -12,7 +12,10 @@ const promise = (async () => {
   await app.init();
 })();
 
-export default async (req: any, res: any) => {
+// ESTO ES LO QUE VERCEL ESTÁ BUSCANDO
+const handler = async (req: any, res: any) => {
   await promise;
   server(req, res);
 };
+
+export default handler;
