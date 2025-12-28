@@ -6,9 +6,13 @@ import express from 'express';
 
 const server = express();
 
-export default async (req: any, res: any) => {
+const promise = (async () => {
   const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
   await setupApp(app);
   await app.init();
+})();
+
+export default async (req: any, res: any) => {
+  await promise;
   server(req, res);
 };
