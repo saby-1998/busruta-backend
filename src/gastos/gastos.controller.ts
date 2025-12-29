@@ -9,6 +9,12 @@ import { UpdateGastoDto } from './dto/update-gasto.dto';
 export class GastosController {
   constructor(private readonly gastosService: GastosService) {}
 
+  @Get('resumen/mensual')
+  @ApiOperation({ summary: 'Obtener totales acumulados del mes actual' })
+  async getResumenMensual() {
+    return await this.gastosService.getResumenMesActual();
+  }
+  
   @Post()
   @ApiOperation({ summary: 'Registrar nuevo gasto' })
   create(@Body() createGastoDto: CreateGastoDto) {

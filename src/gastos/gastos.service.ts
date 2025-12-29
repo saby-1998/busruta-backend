@@ -94,4 +94,43 @@ async findOne(id: string): Promise<Gasto> {
 
     return gastoActualizado;
   }
+
+  async getResumenMesActual() {
+    const ahora = new Date();
+    // Primer día del mes actual a las 00:00:00
+    const fechaInicio = new Date(ahora.getFullYear(), ahora.getMonth(), 1);
+    // Fecha actual (puedes usar ahora tal cual)
+    const fechaFin = ahora;
+
+    // Buscamos gastos activos dentro de ese rango
+    const gastos = await this.gastoModel.find({
+      deletedAt: null,
+      fecha: {
+        $gte: fechaInicio,
+        $lte: fechaFin,
+      },
+    }).exec();
+
+    // Sumar totales
+    const resumen = gastos.reduce(
+      (acc, curr) => {
+        acc.totalGastosAcumulados += curr.totalGastos || 0;
+        acc.totalValorNetoAcumulado += curr.valorNeto || 0;
+        acc.cantidadRegistros += 1;
+        return acc;
+      },
+      { 
+        totalGastosAcumulados: 0, 
+        totalValorNetoAcumulado: 0, 
+        cantidadRegistros: 0 
+      },
+    );
+
+    return {
+      ...resumen,
+      fechaInicio: fechaInicio.toISOString(),
+      fechaFin: fechaFin.toISOString(),
+      mesConsultado: ahora.toLocaleString('es-ES', { month: 'long' }),
+    };
+  }
 }
