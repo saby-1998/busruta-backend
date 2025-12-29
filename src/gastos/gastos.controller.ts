@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Param, Delete, Patch, Query } from '@nestj
 import { GastosService } from './gastos.service';
 import { CreateGastoDto } from './dto/create-gasto.dto';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { UpdateGastoDto } from './dto/update-gasto.dto';
 
 @ApiTags('Gastos')
 @Controller('gastos')
@@ -9,31 +10,38 @@ export class GastosController {
   constructor(private readonly gastosService: GastosService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Registrar gasto usando IDs de Bus y Ruta' })
+  @ApiOperation({ summary: 'Registrar nuevo gasto' })
   create(@Body() createGastoDto: CreateGastoDto) {
-    // El DTO debe recibir "bus": "ID_DE_MONGO" y "ruta": "ID_DE_MONGO"
     return this.gastosService.create(createGastoDto);
   }
 
   @Get()
-  @ApiOperation({ summary: 'Historial de gastos con toda la info de Bus y Ruta' })
+  @ApiOperation({ summary: 'Obtener todos los gastos activos' })
   findAll() {
     return this.gastosService.findAllActive();
   }
 
-  @Get(':id') // 2. Ruta con parámetro: DEBE IR AL FINAL
-  findOne(@Param('id') id: string) {
-    return this.gastosService.findOne(id);
-  }
-
-  @Get('bus/:busId')
+  @Get('bus/:busId') // Las rutas específicas van ARRIBA de las rutas con :id genérico
   @ApiOperation({ summary: 'Filtrar gastos por un bus específico' })
   findByBus(@Param('busId') busId: string) {
     return this.gastosService.findByBus(busId);
   }
 
+  @Get(':id')
+  @ApiOperation({ summary: 'Obtener detalle de un gasto por ID' })
+  findOne(@Param('id') id: string) {
+    return this.gastosService.findOne(id);
+  }
+
+  // NUEVO MÉTODO DE ACTUALIZACIÓN
+  @Patch(':id')
+  @ApiOperation({ summary: 'Actualizar información de un gasto por ID' })
+  update(@Param('id') id: string, @Body() updateGastoDto: UpdateGastoDto) {
+    return this.gastosService.update(id, updateGastoDto);
+  }
+
   @Patch(':id/soft-delete')
-  @ApiOperation({ summary: 'Mover gasto a papelera (Soft Delete)' })
+  @ApiOperation({ summary: 'Mover gasto a papelera' })
   softDelete(@Param('id') id: string) {
     return this.gastosService.softDelete(id);
   }

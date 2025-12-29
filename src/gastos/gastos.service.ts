@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Gasto } from './schemas/gasto.schema';
 import { CreateGastoDto } from './dto/create-gasto.dto';
-
+import { UpdateGastoDto } from './dto/update-gasto.dto';
 import { BadRequestException } from '@nestjs/common';
 import { isValidObjectId } from 'mongoose';
 
@@ -77,5 +77,21 @@ async findOne(id: string): Promise<Gasto> {
     return this.gastoModel.find({ bus: busId, deletedAt: null })
       .populate('bus')
       .exec();
+  }
+  async update(id: string, updateGastoDto: UpdateGastoDto) {
+    const gastoActualizado = await this.gastoModel
+      .findByIdAndUpdate(
+        id, 
+        { $set: updateGastoDto }, 
+        { new: true } // Retorna el objeto modificado
+      )
+      .populate('bus') // Opcional: para que el frontend reciba el objeto bus actualizado
+      .exec();
+
+    if (!gastoActualizado) {
+      throw new NotFoundException(`Gasto con ID ${id} no encontrado`);
+    }
+
+    return gastoActualizado;
   }
 }
